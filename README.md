@@ -40,6 +40,20 @@ Each row is the average of 3 back-to-back tests from one scheduled run.
 `server_id` records which server was actually used, so server drift stays visible
 in the data rather than silent.
 
+## Server selection
+
+Tests only ever run against a **Sydney metro server**, within 60 km of the connection.
+If the list has none, the run is skipped and nothing is recorded: a gap is better than a
+Brisbane reading filed as though it were a Sydney one.
+
+Servers are filtered on distance, not city name, because Chatswood and Fairlight are
+Sydney metro but are not labelled "Sydney". No server ID is hardcoded; eligible servers
+are sorted deterministically so the same one is reused run after run while it exists, and
+the next takes over when it leaves the list.
+
+Readings before 14 October 2026 predate this rule and may show Melbourne, Perth or
+Moorooka. Their throughput is not comparable with the Sydney readings.
+
 ## Collection schedule
 
 4x daily when active: 9am, 12pm, 3pm, 7pm (Sydney time). A reading counts toward a
@@ -67,8 +81,9 @@ These sit on the local side, not here:
 1. The `speedtest-cli` library in use is legacy and unmaintained. Its server list has
    been shrinking and latency probes return unreachable sentinels. Moving to Ookla's
    official CLI is the durable fix.
-2. Hardcoded server IDs rot. A pin to server `30430` took collection to zero for four
-   days in August 2026 once that server left the list. `run.py` now prefers a server
-   and falls back to auto-select rather than failing.
-3. Auto-selected servers have drifted as far as Perth and Brisbane, which is why the
-   report warns about comparability.
+2. ~~Hardcoded server IDs rot.~~ Fixed 14 Oct 2026. A pin to server `30430` took
+   collection to zero for four days in August 2026 once that server left the list.
+   No ID is hardcoded now; servers are chosen by distance each run.
+3. ~~Auto-selected servers drifted as far as Perth and Brisbane.~~ Fixed 14 Oct 2026 by
+   the 60 km Sydney constraint. The report still warns about comparability because the
+   historical rows taken against distant servers remain in the data.
